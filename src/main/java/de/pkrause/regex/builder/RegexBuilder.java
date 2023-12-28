@@ -7,6 +7,7 @@ import de.pkrause.regex.builder.decorator.EndsWithDecorator;
 import de.pkrause.regex.builder.decorator.StartsWithDecorator;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -15,7 +16,7 @@ public class RegexBuilder {
 
     private String escapeRegex(String regex, boolean isComplexRegex) {
 
-        if(isComplexRegex) return regex;
+        if (isComplexRegex) return regex;
 
         String specialChars = "\\.*+?|()[]{}^$";
         for (char specialChar : specialChars.toCharArray()) {
@@ -31,14 +32,23 @@ public class RegexBuilder {
     public RegexBuilder withLiteral(String literal) {
         return withLiteral(literal, false);
     }
+
     public RegexBuilder withLiteral(String literal, boolean isComplexRegex) {
         this.root = new SimpleComponent(root.build() + escapeRegex(literal, isComplexRegex));
+        return this;
+    }
+
+    public RegexBuilder withLiteral(Consumer<RegexBuilder> regexBuilderConsumer) {
+        RegexBuilder regexBuilder = new RegexBuilder("");
+        regexBuilderConsumer.accept(regexBuilder);
+        this.root = new SimpleComponent(root.build() + regexBuilder.build());
         return this;
     }
 
     public RegexBuilder withCharacterClass(String charClass) {
         return withCharacterClass(charClass, false);
     }
+
     public RegexBuilder withCharacterClass(String charClass, boolean isComplexRegex) {
         this.root = new SimpleComponent(root.build() + "[" + escapeRegex(charClass, isComplexRegex) + "]");
         return this;
@@ -59,9 +69,25 @@ public class RegexBuilder {
         return this;
     }
 
+    public RegexBuilder withQuantifier(int min, int max) {
+        if (min < 0 || max < 0 || max < min) {
+            throw new IllegalArgumentException("Invalid quantifier range");
+        }
+        this.root = new SimpleComponent(root.build() + "{" + min + "," + max +"}");
+        return this;
+    }
+    public RegexBuilder withQuantifier(int quantifier) {
+        if (quantifier <= 0) {
+            throw new IllegalArgumentException("Invalid quantifier range");
+        }
+        this.root = new SimpleComponent(root.build() + "{" + quantifier + "}");
+        return this;
+    }
+
     public RegexBuilder withGroup(String group) {
         return withGroup(group, false);
     }
+
     public RegexBuilder withGroup(String group, boolean isComplexRegex) {
         this.root = new SimpleComponent(root.build() + "(" + escapeRegex(group, isComplexRegex) + ")");
         return this;
@@ -71,7 +97,6 @@ public class RegexBuilder {
         this.root = new SimpleComponent(root.build() + "[" + start + "-" + end + "]");
         return this;
     }
-
 
     public RegexBuilder withRange(int start, int end) {
         this.root = new SimpleComponent(root.build() + "[" + start + "-" + end + "]");
@@ -118,22 +143,4 @@ public class RegexBuilder {
         return root.build();
     }
 
-    public static void main(String[] args) {
-        String regex = new RegexBuilder("abc")
-                .startsWith("start")
-                .withAlternatives(true, "[0-9]+", "[A-z]+")
-                .withOneOrMore()
-                .endsWith("end")
-                .ignoreCase()
-                .build();
-
-        System.out.println("Built Regex: " + regex);
-
-        // Now you can use the regex in your Java code
-        if ("startabc123defghiend".matches(regex)) {
-            System.out.println("Match!");
-        } else {
-            System.out.println("No match.");
-        }
-    }
 }

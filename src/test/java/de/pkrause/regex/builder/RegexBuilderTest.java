@@ -15,6 +15,56 @@ class RegexBuilderTest {
     }
 
     @Test
+    public void build_withLiteral_withConsumer_shouldBuildCorrectRegex() {
+        RegexBuilder regexBuilder = new RegexBuilder("");
+
+        regexBuilder.withLiteral(innerBuilder -> innerBuilder.withGroup("abc").withOneOrMore());
+        assertEquals("(abc)+", regexBuilder.build());
+
+        regexBuilder.withLiteral(innerBuilder ->
+                innerBuilder
+                        .withGroup("def")
+                        .withQuantifier(3)
+                        .withGroup("ghi")
+                        .withOneOrMore()
+                        .build()
+        );
+        assertEquals("(abc)+(def){3}(ghi)+", regexBuilder.build());
+    }
+
+    @Test
+    public void build_withQuantifier_shouldBuildCorrectRegex() {
+        RegexBuilder regexBuilder = new RegexBuilder("");
+
+        regexBuilder.withGroup("abc").withQuantifier(2, 4);
+        assertEquals("(abc){2,4}", regexBuilder.build());
+
+        try {
+            regexBuilder.withLiteral("def").withQuantifier(4, 2);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException expectedException) {
+        }
+
+        try {
+            regexBuilder.withLiteral("ghi").withQuantifier(-1, 3);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException expectedException) {
+        }
+
+        try {
+            regexBuilder.withLiteral("jkl").withQuantifier(1, -3);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException expectedException) {
+        }
+
+        try {
+            regexBuilder.withLiteral("mno").withQuantifier(-2, -1);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException expectedException) {
+        }
+    }
+
+    @Test
     void build_withCharacterClass_shouldBuildCorrectRegex() {
         String regex = new RegexBuilder("abc")
                 .withCharacterClass("0-9")
@@ -133,5 +183,27 @@ class RegexBuilderTest {
                 .build();
 
         assertEquals("(?i)^startabc([0-9]+|[A-z]+)+end$", regex);
+
+        String expectedRegex = "(?i)^startabc[0-9]{3}[A-z]{6}+end$";
+
+        // Construct the regex using the RegexBuilder
+        String actualRegex = new RegexBuilder("abc")
+                .startsWith("start")
+                .withLiteral(rb -> rb
+                        .withRange(0, 9).withQuantifier(3)
+                        .withRange('A', 'z').withQuantifier(6)
+                        .withOneOrMore()
+                        .build())
+                .endsWith("end")
+                .ignoreCase()
+                .build();
+
+        assertEquals(expectedRegex, actualRegex);
+
+        // Test if the constructed regex matches specific input strings
+        assertTrue("startabc123defghiend".matches(actualRegex));
+        assertTrue("startABC123DEFGHIEND".matches(actualRegex)); // This should match
+        assertFalse("startXYZ789XYZend".matches(actualRegex));   // This should not match
     }
+
 }
