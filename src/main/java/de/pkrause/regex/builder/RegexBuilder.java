@@ -6,6 +6,7 @@ import de.pkrause.regex.builder.decorator.AlternativeDecorator;
 import de.pkrause.regex.builder.decorator.EndsWithDecorator;
 import de.pkrause.regex.builder.decorator.StartsWithDecorator;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -39,10 +40,19 @@ public class RegexBuilder {
     }
 
     public RegexBuilder withLiteral(Consumer<RegexBuilder> regexBuilderConsumer) {
-        RegexBuilder regexBuilder = new RegexBuilder("");
-        regexBuilderConsumer.accept(regexBuilder);
+        RegexBuilder regexBuilder = acceptAndReturnRegexBuilder(regexBuilderConsumer);
         this.root = new SimpleComponent(root.build() + regexBuilder.build());
         return this;
+    }
+
+    private static RegexBuilder acceptAndReturnRegexBuilder(Consumer<RegexBuilder> regexBuilderConsumer) {
+        if (regexBuilderConsumer == null) {
+            throw new IllegalArgumentException("Unexpected consumer type");
+        }
+
+        RegexBuilder regexBuilder = new RegexBuilder("");
+        regexBuilderConsumer.accept(regexBuilder);
+        return regexBuilder;
     }
 
     public RegexBuilder withCharacterClass(String charClass) {
@@ -73,9 +83,10 @@ public class RegexBuilder {
         if (min < 0 || max < 0 || max < min) {
             throw new IllegalArgumentException("Invalid quantifier range");
         }
-        this.root = new SimpleComponent(root.build() + "{" + min + "," + max +"}");
+        this.root = new SimpleComponent(root.build() + "{" + min + "," + max + "}");
         return this;
     }
+
     public RegexBuilder withQuantifier(int quantifier) {
         if (quantifier <= 0) {
             throw new IllegalArgumentException("Invalid quantifier range");
@@ -105,6 +116,24 @@ public class RegexBuilder {
 
     public RegexBuilder withAlternatives(String... alternatives) {
         return withAlternatives(false, alternatives);
+    }
+
+
+    @SafeVarargs
+    public final RegexBuilder withAlternatives(Consumer<RegexBuilder>... alternativeConsumers) {
+        try {
+
+
+            String[] alternatives = Arrays.stream(alternativeConsumers)
+                    .map(RegexBuilder::acceptAndReturnRegexBuilder)
+                    .map(RegexBuilder::build)
+                    .toList()
+                    .toArray(new String[alternativeConsumers.length]);
+
+            return withAlternatives(true, alternatives);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error constructing alternatives: " + e.getMessage(), e);
+        }
     }
 
     public RegexBuilder withAlternatives(boolean isComplexRegex, String... alternatives) {

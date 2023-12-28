@@ -145,6 +145,38 @@ class RegexBuilderTest {
         assertEquals("abc([0-9]+|[A-Z]+)", regex);
     }
 
+
+    @Test
+    public void build_withAlternatives_withConsumers_shouldBuildCorrectRegex() {
+        // Test case 1: Valid alternatives
+        RegexBuilder regexBuilder1 = new RegexBuilder("");
+        regexBuilder1.withAlternatives(
+                rb -> rb.withGroup("abc").withOneOrMore(),
+                rb -> rb.withGroup("def").withOneOrMore()
+        );
+        assertEquals("((abc)+|(def)+)", regexBuilder1.build());
+
+        // Test case 2: Valid alternatives with quantifiers
+        RegexBuilder regexBuilder2 = new RegexBuilder("");
+        regexBuilder2.withAlternatives(
+                rb -> rb.withGroup("123").withQuantifier(2),
+                rb -> rb.withGroup("456").withQuantifier(3)
+        );
+        assertEquals("((123){2}|(456){3})", regexBuilder2.build());
+
+        // Test case 3: Exception thrown during alternative construction
+        try {
+            RegexBuilder regexBuilder3 = new RegexBuilder("");
+            regexBuilder3.withAlternatives(
+                    rb -> rb.withLiteral("ghi"),
+                    rb -> { throw new RuntimeException("Simulated exception"); }
+            );
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Error constructing alternatives: Simulated exception", e.getMessage());
+        }
+    }
+
     @Test
     void build_ignoreCase_shouldBuildCorrectRegex() {
         String regex = new RegexBuilder("abc")
