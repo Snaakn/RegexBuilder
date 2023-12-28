@@ -148,7 +148,6 @@ class RegexBuilderTest {
 
     @Test
     public void build_withAlternatives_withConsumers_shouldBuildCorrectRegex() {
-        // Test case 1: Valid alternatives
         RegexBuilder regexBuilder1 = new RegexBuilder("");
         regexBuilder1.withAlternatives(
                 rb -> rb.withGroup("abc").withOneOrMore(),
@@ -156,7 +155,6 @@ class RegexBuilderTest {
         );
         assertEquals("((abc)+|(def)+)", regexBuilder1.build());
 
-        // Test case 2: Valid alternatives with quantifiers
         RegexBuilder regexBuilder2 = new RegexBuilder("");
         regexBuilder2.withAlternatives(
                 rb -> rb.withGroup("123").withQuantifier(2),
@@ -164,7 +162,6 @@ class RegexBuilderTest {
         );
         assertEquals("((123){2}|(456){3})", regexBuilder2.build());
 
-        // Test case 3: Exception thrown during alternative construction
         try {
             RegexBuilder regexBuilder3 = new RegexBuilder("");
             regexBuilder3.withAlternatives(
@@ -218,7 +215,6 @@ class RegexBuilderTest {
 
         String expectedRegex = "(?i)^startabc[0-9]{3}[A-z]{6}+end$";
 
-        // Construct the regex using the RegexBuilder
         String actualRegex = new RegexBuilder("abc")
                 .startsWith("start")
                 .withLiteral(rb -> rb
@@ -232,10 +228,9 @@ class RegexBuilderTest {
 
         assertEquals(expectedRegex, actualRegex);
 
-        // Test if the constructed regex matches specific input strings
         assertTrue("startabc123defghiend".matches(actualRegex));
-        assertTrue("startABC123DEFGHIEND".matches(actualRegex)); // This should match
-        assertFalse("startXYZ789XYZend".matches(actualRegex));   // This should not match
+        assertTrue("startABC123DEFGHIEND".matches(actualRegex));
+        assertFalse("startXYZ789XYZend".matches(actualRegex));
     }
 
 }
