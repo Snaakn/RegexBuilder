@@ -123,11 +123,10 @@ public class RegexBuilder {
     public final RegexBuilder withAlternatives(Consumer<RegexBuilder>... alternativeConsumers) {
         try {
 
-
             String[] alternatives = Arrays.stream(alternativeConsumers)
                     .map(RegexBuilder::acceptAndReturnRegexBuilder)
                     .map(RegexBuilder::build)
-                    .toList()
+                    .collect(Collectors.toList())
                     .toArray(new String[alternativeConsumers.length]);
 
             return withAlternatives(true, alternatives);

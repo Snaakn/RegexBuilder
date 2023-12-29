@@ -11,7 +11,7 @@ RegexBuilder is a Java library that simplifies the construction of regular expre
 
 ## Prerequisites
 
-- Java 8 or higher
+- Java 8 or higher (this project is currently set up for 17 so higher is recommended)
 - Maven
 
 ## Getting Started
@@ -35,3 +35,8 @@ Execute the following Maven command to run the tests:
 ```bash
 ./mvnw test
 ```
+
+## Example
+A regex that matches certain urls:
+
+
